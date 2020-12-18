@@ -5,15 +5,22 @@ import pyglet
 import pyttsx3
 import threading
 import warnings
+
 warnings.filterwarnings("ignore")
 
-speech_voice = 3  # голосовой движок
-rate = 120
-tts = pyttsx3.init()
-voices = tts.getProperty("voices")
-tts.setProperty('rate', rate)
-tts.setProperty("voice", voices[speech_voice].id)
-# lock = threading.Lock()  # взаимоблокировка отдельных голосовых потоков
+""" Количество раундов, вдохов в раунде, задержка дыхания на вдохе"""
+rounds, breaths, hold = 4, 2, 5
+
+
+def play_wav(src):
+    wav = pyglet.media.load(sys.path[0] + '\\src\\wav\\' + src + '.wav')
+    wav.play()
+    time.sleep(wav.duration)
+
+
+def play_wav_inline(src):
+    wav = pyglet.media.load(sys.path[0] + '\\src\\wav\\' + src + '.wav')
+    wav.play()
 
 
 def nums(what, morph=pymorphy2.MorphAnalyzer()):
@@ -29,69 +36,82 @@ def nums(what, morph=pymorphy2.MorphAnalyzer()):
 
 
 def speak(what):
-    print('🔊 ', what)
+    speech_voice = 3  # голосовой движок
+    rate = 120
+    tts = pyttsx3.init()
+    voices = tts.getProperty("voices")
+    tts.setProperty('rate', rate)
+    tts.setProperty("voice", voices[speech_voice].id)
+    print('🔊', what)
     tts.say(what)
     tts.runAndWait()
     # tts.stop()
 
 
-def say(what):
-    # lock.acquire()
-    thread1 = threading.Thread(target=speak, kwargs={'what': what})
-    thread1.start()
-    # thread1.join()
-    # lock.release()
+class Workout:
 
+    def __init__(self, rounds=3, breaths=30, hold=15):
+        self.rounds = rounds
+        self.breaths = breaths
+        self.hold = hold
+        self.round_times = []
+        self.lock = threading.Lock()  # взаимоблокировка отдельных голосовых потоков
 
-def play_wav(src):
-    wav = pyglet.media.load(sys.path[0] + '\\src\\wav\\' + src + '.wav')
-    wav.play()
-    time.sleep(wav.duration)
+    def __str__(self):
+        return '\n♻{} 🗣{} ⏱{}'.format(self.rounds, self.breaths, self.hold)
 
-
-def play_wav_inline(src):
-    wav = pyglet.media.load(sys.path[0] + '\\src\\wav\\' + src + '.wav')
-    wav.play()
-
-
-def breathe(number):
-    for i in range(number):
-        print('Вдох', str(i + 1))
-        play_wav('inhale')
-        play_wav('exhale')
-
-
-def stopwatch(seconds: int):
-    min = seconds // 60
-    sec = seconds % 60
-    return '{:02}:{:02}'.format(min, sec)
-
-
-def clock_tick(hold):
-    for i in range(hold):
-        play_wav('clock')
-
-
-def breathing(rounds=3, breaths=30, hold=15):
-    speak(nums('Выполняем ' + str(rounds) + ' раунд дыхания'))
-    speak('В каждом раунде ' + nums(str(breaths) + ' глубокий вдох и ' + str(breaths) + ' спокойный выдох'))
-    for i in range(rounds):
-        play_wav_inline('reinsamba__gong')
-        speak('Раунд ' + str(i + 1))
-        breathe(breaths)
-        speak('Задержали дыхание на выдохе')
+    def __hold_breath(self):
         start_time = time.time()
         input()
-        print(stopwatch(int(time.time() - start_time)))
+        seconds = int(time.time() - start_time)
+        mins = seconds // 60
+        secs = seconds % 60
+        self.round_times.append('{:02}:{:02}'.format(mins, secs))
         play_wav_inline('inhale')
-        speak('Глубокий вдох.\nЗадерживаем дыхание на ' + nums(str(hold) + ' секунда'))
-        clock_tick(hold)
+        self.say('Глубокий вдох. ' + nums("{} минута {} секунда".format(mins, secs)))
+
+    def __clock_tick(self):
+        for i in range(self.hold):
+            play_wav('clock')
+
+    def __breathe_round(self, round):
+        self.say('Раунд ' + str(round))
+        for i in range(self.breaths):
+            if i % 10 == 0:
+                play_wav_inline('reinsamba__gong')
+            print(i + 1, end=' ')
+            play_wav('inhale')
+            play_wav('exhale')
+        print()
+        self.say('Задержали дыхание на выдохе')
+        self.__hold_breath()
+        self.say('Держим ' + nums(str(self.hold) + ' секунда'))
+        self.__clock_tick()
         play_wav_inline('exhale')
-        speak('Выдохнули')
+        self.say('Выдохнули')
         time.sleep(1)
 
+    def breathe(self):
+        self.say('Выполняем ' + nums(str(self.rounds) + ' раунд дыхания'))
+        self.say('В каждом раунде ' + nums(str(self.breaths) + ' глубокий вдох и ' +
+                                           str(self.breaths) + ' спокойный выдох'))
+        for i in range(self.rounds):
+            self.__breathe_round(i + 1)
+        self.say('Восстанавливаем дыхание. Начинаем шевелиться с пальцев рук и ног')
 
-print('\n♻4 🗣30 ⏱12')
-rounds, breaths, hold = 4, 2, 12
-breathing(rounds, breaths, hold)
-speak('Теперь отдыхаем, восстанавливаем дыхание')
+    def statistics(self):
+        for i in range(len(self.round_times)):
+            print('Раунд', i, self.round_times[i])
+
+    def say(self, what):
+        self.lock.acquire()
+        thread = threading.Thread(target=speak, kwargs={'what': what})
+        thread.start()
+        thread.join()
+        self.lock.release()
+
+
+workout = Workout(rounds, breaths, hold)
+workout.breathe()
+
+workout.statistics()
