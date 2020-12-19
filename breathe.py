@@ -5,11 +5,12 @@ import pyglet
 import pyttsx3
 import threading
 import warnings
+import pytils
 
 warnings.filterwarnings("ignore")
 
 """ Количество раундов, вдохов в раунде, задержка дыхания на вдохе"""
-rounds, breaths, hold = 4, 30, 15
+rounds, breaths, hold = 4, 1, 4
 
 
 def play_wav(src):
@@ -23,16 +24,33 @@ def play_wav_inline(src):
     wav.play()
 
 
-def nums(what, morph=pymorphy2.MorphAnalyzer()):
+def correct_numerals(phrase, morph=pymorphy2.MorphAnalyzer()):
+    new_phrase = []
+    py_gen = 1
+    phrase = phrase.split(' ')
+    while phrase:
+        word = phrase.pop(-1)
+        if 'NUMB' in morph.parse(word)[0].tag:
+            new_phrase.append(pytils.numeral.sum_string(int(word), py_gen))
+        else:
+            new_phrase.append(word)
+        py_gen = pytils.numeral.FEMALE if 'femn' in morph.parse(word)[0].tag else pytils.numeral.MALE
+    return ' '.join(new_phrase[::-1])
+
+
+def nums(phrase, morph=pymorphy2.MorphAnalyzer()):
     """ согласование существительных с числительными, стоящими перед ними """
-    what = what.replace('  ', ' ').replace(',', ' ,')
-    phrase = what.split(' ')
-    for i in range(1, len(phrase)):
-        if 'NUMB' in morph.parse(phrase[i - 1])[0].tag:
-            phrase[i] = str(morph.parse(phrase[i])[0].make_agree_with_number(abs(int(phrase[i - 1]))).word)
-        if 'NUMB' in morph.parse(phrase[i - 2])[0].tag:
-            phrase[i] = str(morph.parse(phrase[i])[0].make_agree_with_number(abs(int(phrase[i - 2]))).word)
-    return ' '.join(phrase).replace(' ,', ',')
+    phrase = phrase.replace('  ', ' ').replace(',', ' ,')
+    numeral = ''
+    new_phrase = []
+    for word in phrase.split(' '):
+        if 'NUMB' in morph.parse(word)[0].tag:
+            numeral = word
+        if numeral:
+            word = str(morph.parse(word)[0].make_agree_with_number(abs(int(numeral))).word)
+        new_phrase.append(word)
+
+    return ' '.join(new_phrase).replace(' ,', ',')
 
 
 def speak(what):
@@ -43,6 +61,7 @@ def speak(what):
     tts.setProperty('rate', rate)
     tts.setProperty("voice", voices[speech_voice].id)
     print('🔊', what)
+    what = correct_numerals(what)
     tts.say(what)
     tts.runAndWait()
     # tts.stop()
@@ -80,8 +99,8 @@ class Workout:
         for i in range(self.breaths):
             if i % 10 == 0:
                 play_wav_inline('gong')
-            print(i + 1, end=' ')
             play_wav('inhale')
+            print(i + 1, end=' ')
             play_wav('exhale')
         print()
         self.say('Задерживаем дыхание на выдохе')
@@ -93,12 +112,12 @@ class Workout:
         time.sleep(1)
 
     def breathe(self):
-        self.say('Выполняем ' + nums(str(self.rounds) + ' раунд по ' + str(self.breaths) + ' глубокий вдох и ' +
-                                     str(self.breaths) + ' спокойный выдох'))
-        self.say('Приготовились. Начали')
+        self.say('Выполняем ' + nums(str(self.rounds) + ' раунд'))
+        self.say('Каждый раунд это ' + nums(str(self.breaths) + ' глубокий вдох - и спокойный выдох'))
+        self.say('Приготовились...')
         for i in range(self.rounds):
             self.__breathe_round(i + 1)
-        self.say('Восстанавливаем дыхание. Начинаем шевелиться с пальцев рук и ног')
+        self.say('Восстанавливаем дыхание.')
 
     def statistics(self):
         print('=============')
