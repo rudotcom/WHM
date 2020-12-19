@@ -72,6 +72,7 @@ class Workout:
 
     def __clock_tick(self):
         for i in range(self.hold):
+            # self.say(hold - i)
             play_wav('clock')
 
     def __breathe_round(self, round):
@@ -94,6 +95,7 @@ class Workout:
     def breathe(self):
         self.say('Выполняем ' + nums(str(self.rounds) + ' раунд по ' + str(self.breaths) + ' глубокий вдох и ' +
                                      str(self.breaths) + ' спокойный выдох'))
+        self.say('Приготовились. Начали')
         for i in range(self.rounds):
             self.__breathe_round(i + 1)
         self.say('Восстанавливаем дыхание. Начинаем шевелиться с пальцев рук и ног')
