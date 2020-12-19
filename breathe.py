@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 """ Количество раундов, вдохов в раунде, задержка дыхания на вдохе"""
-rounds, breaths, hold = 4, 2, 5
+rounds, breaths, hold = 4, 30, 15
 
 
 def play_wav(src):
@@ -99,8 +99,10 @@ class Workout:
         self.say('Восстанавливаем дыхание. Начинаем шевелиться с пальцев рук и ног')
 
     def statistics(self):
+        print('=============')
         for i in range(len(self.round_times)):
             print('Раунд', i, self.round_times[i])
+        print('=============')
 
     def say(self, what):
         self.lock.acquire()
