@@ -31,5 +31,5 @@ def nums(phrase, morph=pymorphy2.MorphAnalyzer()):
     return ' '.join(new_phrase).replace(' ,', ',')
 
 
-mins, secs = 2, 2
+mins, secs = 0, 0
 print(correct_numerals(nums("Вдох. {} минута {} секунда".format(mins, secs))))

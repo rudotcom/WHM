@@ -10,7 +10,7 @@ import pytils
 warnings.filterwarnings("ignore")
 
 """ Количество раундов, вдохов в раунде, задержка дыхания на вдохе"""
-rounds, breaths, hold = 4, 1, 4
+rounds, breaths, hold = 4, 30, 13
 
 
 def play_wav(src):
@@ -91,8 +91,11 @@ class Workout:
 
     def __clock_tick(self):
         for i in range(self.hold):
-            # self.say(hold - i)
-            play_wav('clock')
+            if i < hold - 3:
+                time.sleep(1)
+            else:
+                play_wav('clock')
+        play_wav_inline('gong2')
 
     def __breathe_round(self, round):
         self.say('Раунд ' + str(round))
