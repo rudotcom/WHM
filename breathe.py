@@ -78,23 +78,22 @@ class Workout:
         self.say('Раунд ' + str(round))
         for i in range(self.breaths):
             if i % 10 == 0:
-                play_wav_inline('reinsamba__gong')
+                play_wav_inline('gong')
             print(i + 1, end=' ')
             play_wav('inhale')
             play_wav('exhale')
         print()
-        self.say('Задержали дыхание на выдохе')
+        self.say('Задерживаем дыхание на выдохе')
         self.__hold_breath()
-        self.say('Держим ' + nums(str(self.hold) + ' секунда'))
+        # self.say('Держим ' + nums(str(self.hold) + ' секунда'))
         self.__clock_tick()
         play_wav_inline('exhale')
-        self.say('Выдохнули')
+        self.say('Выдох')
         time.sleep(1)
 
     def breathe(self):
-        self.say('Выполняем ' + nums(str(self.rounds) + ' раунд дыхания'))
-        self.say('В каждом раунде ' + nums(str(self.breaths) + ' глубокий вдох и ' +
-                                           str(self.breaths) + ' спокойный выдох'))
+        self.say('Выполняем ' + nums(str(self.rounds) + ' раунд по ' + str(self.breaths) + ' глубокий вдох и ' +
+                                     str(self.breaths) + ' спокойный выдох'))
         for i in range(self.rounds):
             self.__breathe_round(i + 1)
         self.say('Восстанавливаем дыхание. Начинаем шевелиться с пальцев рук и ног')
